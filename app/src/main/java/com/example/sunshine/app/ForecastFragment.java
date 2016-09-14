@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.text.format.Time;
 import android.util.Log;
@@ -45,6 +46,13 @@ public class ForecastFragment extends Fragment
     }
 
     @Override
+    public void onStart()
+    {
+        super.onStart();
+        updateWeather();
+    }
+
+    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater)
     {
         inflater.inflate(R.menu.forecastfragment, menu);
@@ -56,29 +64,29 @@ public class ForecastFragment extends Fragment
         int id = item.getItemId();
 
         if (id == R.id.action_refresh) {
-            new FetchWeatherTask().execute("94043");
+            updateWeather();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
+    private void updateWeather()
+    {
+        String postal = PreferenceManager
+                .getDefaultSharedPreferences(getContext())
+                .getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default));
+        new FetchWeatherTask().execute(postal);
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
     {
-        ArrayList<String> forecastData = new ArrayList<String>();
-        forecastData.add("Today - Sunny - 58/68");
-        forecastData.add("Tomorrow - Sunny - 58/68");
-        forecastData.add("Wednesday - Sunny - 58/68");
-        forecastData.add("Thursday - Sunny - 58/68");
-        forecastData.add("Friday - Sunny - 58/68");
-        forecastData.add("Saturday - Sunny - 58/68");
-
         m_adapter = new ArrayAdapter<String>(
                 getActivity(),
                 R.layout.list_item_forecast,
                 R.id.list_item_forecast_textview,
-                forecastData);
+                new ArrayList<String>());
 
         final View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
@@ -88,9 +96,9 @@ public class ForecastFragment extends Fragment
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String forecast = m_adapter.getItem(position);
-                Intent intent = new Intent(getActivity(), DetailActivity.class)
+                Intent detailActivityIntent = new Intent(getActivity(), DetailActivity.class)
                         .putExtra(Intent.EXTRA_TEXT, forecast);
-                startActivity(intent);
+                startActivity(detailActivityIntent);
             }
         });
 
